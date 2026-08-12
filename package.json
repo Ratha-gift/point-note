@@ -16,6 +16,7 @@
     },
     "dependencies": {
         "@inertiajs/react": "^2.3.27",
+        "puppeteer": "^25.6.0",
         "react": "^19.2.8",
         "react-dom": "^19.2.8"
     }

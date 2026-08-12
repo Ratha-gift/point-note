@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\PointEntry;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Spatie\Browsershot\Browsershot;
 
 class PointTrackerController extends Controller
 {
@@ -94,19 +94,31 @@ class PointTrackerController extends Controller
     }
 
     // GET /point-tracker/report/export-pdf?month=2026-08
+    // Rendered via headless Chrome (Browsershot/Puppeteer) rather than
+    // dompdf: Khmer text needs real OpenType shaping (subscript consonant
+    // stacking, vowel reordering) that dompdf's layout engine can't do,
+    // but a real browser engine handles natively — same as the live page.
     public function exportPdf(Request $request)
     {
         $month = $request->input('month', now()->format('Y-m'));
         $rows = $this->monthlyRows($month);
 
-        $pdf = Pdf::loadView('exports.point-tracker-report', [
+        $html = view('exports.point-tracker-report', [
             'month' => $month,
             'rows' => $rows,
             'monthTotal' => round($rows->sum('total'), 2),
             'monthPoint' => round($rows->sum('point'), 1),
-        ]);
+        ])->render();
 
-        return $pdf->download("point-tracker-{$month}.pdf");
+        $pdf = Browsershot::html($html)
+            ->format('A4')
+            ->showBackground()
+            ->pdf();
+
+        return response($pdf, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"point-tracker-{$month}.pdf\"",
+        ]);
     }
 
     // GET /point-tracker/report/export-excel?month=2026-08

@@ -3,15 +3,19 @@
 <head>
     <meta charset="utf-8">
     <style>
+        {{-- Fonts are inlined as base64 data URIs (rather than a storage_path()
+             file:// reference) so this view renders identically regardless of
+             OS path separators or where the headless-Chrome process's working
+             directory ends up. --}}
         @font-face {
             font-family: 'NotoKhmer';
-            src: url('{{ str_replace('\\', '/', storage_path('fonts/NotoSansKhmer-Regular.ttf')) }}');
+            src: url(data:font/ttf;base64,{{ base64_encode(file_get_contents(storage_path('fonts/NotoSansKhmer-Regular.ttf'))) }}) format('truetype');
             font-weight: normal;
             font-style: normal;
         }
         @font-face {
             font-family: 'NotoKhmer';
-            src: url('{{ str_replace('\\', '/', storage_path('fonts/NotoSansKhmer-Bold.ttf')) }}');
+            src: url(data:font/ttf;base64,{{ base64_encode(file_get_contents(storage_path('fonts/NotoSansKhmer-Bold.ttf'))) }}) format('truetype');
             font-weight: bold;
             font-style: normal;
         }

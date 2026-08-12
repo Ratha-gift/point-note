@@ -17,7 +17,14 @@ that can be exported to PDF or Excel.
 
 - **Backend:** Laravel 10 (PHP 8.1+), MySQL
 - **Frontend:** React 19 via Inertia.js v2, Vite, Tailwind CSS
-- **Exports:** `barryvdh/laravel-dompdf` (PDF), `phpoffice/phpspreadsheet` (Excel)
+- **Exports:** `spatie/browsershot` + Puppeteer/headless Chrome (PDF),
+  `phpoffice/phpspreadsheet` (Excel)
+
+PDF export renders the report through headless Chrome rather than a PHP PDF
+library (dompdf), because Khmer text needs real OpenType text shaping
+(subscript consonant stacking, vowel reordering) that PHP-only PDF renderers
+don't do — a browser engine handles it the same way it renders the live
+page correctly.
 
 ## Local development
 
@@ -26,6 +33,7 @@ Requirements: PHP 8.1+, Composer, Node.js, MySQL.
 ```bash
 composer install
 npm install
+npx puppeteer browsers install chrome-headless-shell
 cp .env.example .env
 php artisan key:generate
 ```
@@ -44,6 +52,8 @@ Visit `http://127.0.0.1:8000/point-tracker`.
 
 ```bash
 composer install --no-dev --optimize-autoloader
+npm install
+npx puppeteer browsers install chrome-headless-shell
 npm run build
 php artisan migrate --force
 php artisan config:cache
@@ -62,5 +72,20 @@ Set the following in the production environment before running the above
   will be created by `php artisan migrate --force`
 
 `npm run build` outputs to `public/build/` and is what Blade's `@vite`
-directive serves in production — no Node process needs to keep running on
-the server.
+directive serves in production — no Node *process* needs to stay running.
+
+**However**, PDF export (`spatie/browsershot`) shells out to Node +
+headless Chrome **per request**, so the deploy target needs, at runtime
+(not just at build time):
+- Node.js on `PATH`
+- The `chrome-headless-shell` binary installed (the `npx puppeteer
+  browsers install chrome-headless-shell` step above — its cache directory
+  must persist into the running container, not just the build step)
+- On Linux, headless Chrome needs its usual shared-library dependencies
+  (nss, atk, cups, gtk, etc.) present in the image — a minimal PHP-only
+  container (e.g. a bare `php:8.1-fpm` image) will be missing these and
+  the export will fail at runtime with a "Failed to launch the browser
+  process" error. A platform that mixes PHP + Node build steps (Railway/
+  Render's Node+PHP nixpacks, or a custom Dockerfile installing Chrome's
+  dependencies) is required — a Node-less PHP-only host will not work for
+  the PDF export route.
