@@ -88,6 +88,7 @@ export default function PointTracker({ date, entries, total, point }) {
             </span>
             <button onClick={() => deleteEntry(entry.id)} className="text-red-500 text-xs font-bold">✕</button>
           </span>
+          
         ))}
       </div>
 

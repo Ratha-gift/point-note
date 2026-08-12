@@ -75,7 +75,18 @@ return [
             'prefix' => '',
             'prefix_indexes' => true,
             'search_path' => 'public',
-            'sslmode' => 'prefer',
+            // Supabase's pooler requires TLS; 'require' (not 'prefer') so a
+            // downgrade to plaintext never happens silently.
+            'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Supabase's transaction pooler (pgbouncer) hands out a pooled
+            // connection per query/transaction and does not support PDO
+            // persistent connections — a persistent PDO handle would hold
+            // a pooler slot open indefinitely and eventually exhaust it.
+            // Explicit false here (not just "unset") so it can't be turned
+            // on by an ambient php.ini persistent default.
+            'options' => extension_loaded('pdo_pgsql') ? [
+                PDO::ATTR_PERSISTENT => false,
+            ] : [],
         ],
 
         'sqlsrv' => [

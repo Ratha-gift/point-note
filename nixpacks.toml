@@ -1,0 +1,30 @@
+# Railway build config. Merges the auto-detected PHP and Node providers
+# (composer.json + package.json both exist, so Nixpacks runs both) and adds
+# system Chromium for PDF export (see app/Http/Controllers/PointTrackerController.php
+# exportPdf — renders via headless Chrome, not dompdf, because Khmer text
+# needs real OpenType shaping that a PHP-only PDF library can't do).
+providers = ["php", "node"]
+
+[phases.setup]
+# Chromium's own Nix closure already carries the shared libraries it needs
+# (nss, atk, cups, gtk, etc.) — no need to list them individually.
+nixPkgs = ["chromium"]
+
+[phases.install]
+cmds = [
+    "composer install --no-dev --optimize-autoloader",
+    # Skip Puppeteer's own ~300MB Chromium download during npm install —
+    # we use the system Chromium installed above instead (wired up via
+    # PUPPETEER_EXECUTABLE_PATH in [start], resolved at container boot
+    # since Nix's store path isn't known ahead of time).
+    "PUPPETEER_SKIP_DOWNLOAD=true npm ci"
+]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+# php artisan serve is Laravel's dev server — fine for a small low-traffic
+# app, but note it's single-threaded (one request at a time). If traffic
+# grows, switch this to php-fpm + a real web server.
+cmd = "export PUPPETEER_EXECUTABLE_PATH=$(command -v chromium) && php artisan config:cache && php artisan route:cache && php artisan serve --host=0.0.0.0 --port=$PORT"

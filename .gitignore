@@ -15,6 +15,7 @@
 .env
 .env.backup
 .env.production
+.env.railway
 Homestead.json
 Homestead.yaml
 auth.json
