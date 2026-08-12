@@ -34,8 +34,8 @@ export default function PointTrackerReport({ month, rows, monthTotal, monthPoint
         <span className="text-amber-700">{monthPoint}</span>
       </div>
 
-      <div className="fixed bottom-0 inset-x-0 bg-white border-t p-3">
-        <div className="max-w-lg mx-auto flex gap-2">
+      <div className="fixed bottom-0 inset-x-0 p-3 pointer-events-none">
+        <div className="max-w-lg mx-auto flex gap-2 pointer-events-auto">
           <a
             href={`/point-tracker/report/export-pdf?month=${month}`}
             className="flex-1 flex items-center justify-center gap-2 bg-red-600 text-white px-4 py-2 rounded font-bold hover:bg-red-700"
