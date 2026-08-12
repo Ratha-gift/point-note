@@ -5,8 +5,14 @@
     <style>
         @font-face {
             font-family: 'NotoKhmer';
-            src: url('{{ storage_path('fonts/NotoSansKhmer-Regular.ttf') }}');
+            src: url('{{ str_replace('\\', '/', storage_path('fonts/NotoSansKhmer-Regular.ttf')) }}');
             font-weight: normal;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'NotoKhmer';
+            src: url('{{ str_replace('\\', '/', storage_path('fonts/NotoSansKhmer-Bold.ttf')) }}');
+            font-weight: bold;
             font-style: normal;
         }
         body {

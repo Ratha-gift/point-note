@@ -10,6 +10,7 @@
 # generated cache, keep the real font.
 /storage/fonts/*
 !/storage/fonts/NotoSansKhmer-Regular.ttf
+!/storage/fonts/NotoSansKhmer-Bold.ttf
 /vendor
 .env
 .env.backup
