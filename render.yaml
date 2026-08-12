@@ -1,0 +1,44 @@
+# Render Blueprint — Docker-based web service for point-note.
+# Deploy: connect this repo in the Render dashboard, it should auto-detect
+# this file. Any envVar below with `sync: false` is a placeholder Render
+# will prompt you to fill in by hand (dashboard only, never committed).
+services:
+  - type: web
+    name: point-note
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: APP_KEY
+        sync: false
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_URL
+        sync: false # fill in once Render assigns/you set the service's public URL
+
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        sync: false # Supabase transaction-pooler host
+      - key: DB_PORT
+        value: "6543" # Supabase transaction-pooler port
+      - key: DB_DATABASE
+        value: postgres
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_SSLMODE
+        value: require
+
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_DRIVER
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: LOG_LEVEL
+        value: error
