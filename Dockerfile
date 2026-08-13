@@ -74,6 +74,16 @@ EXPOSE 10000
 # config/route cache read from env vars at *container start* (Render
 # injects DB_*/APP_KEY/etc. at runtime, not build time) — caching them
 # during the build would bake in blank values. Same reasoning as the
-# earlier Railway nixpacks.toml. Migrations are run manually from Render's
-# shell (see deployment checklist), not on every boot.
-CMD ["sh", "-c", "php artisan config:cache && php artisan route:cache && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
+# earlier Railway nixpacks.toml.
+#
+# Migrations run here, before serve, rather than manually from a shell:
+# Render's free tier has no shell access. `migrate --force` is safe to run
+# on every boot — already-applied migrations are tracked and skipped, so
+# a restart/redeploy with nothing new to migrate is a no-op.
+#
+# Shell form (a plain `CMD instruction args...` line) would work too, but
+# Docker silently runs shell-form CMD as `/bin/sh -c "<the whole line>"`
+# anyway — writing that `sh -c` out explicitly in exec (JSON array) form
+# is equivalent, just not implicit, and is what Docker's own linter
+# recommends (JSONArgsRecommended) for correct OS signal handling.
+CMD ["sh", "-c", "php artisan config:cache && php artisan route:cache && php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
