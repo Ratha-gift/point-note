@@ -35,9 +35,11 @@ RUN install-php-extensions pdo_pgsql pgsql mbstring xml dom simplexml xmlreader 
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Node 20, for `npm run build` at image build time AND for Browsershot at
-# request time (see comment above).
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+# Node 24 (matches local dev, and Puppeteer 25.x's own package.json
+# requires Node >=22.12 — confirmed via `npm warn EBADENGINE` when this
+# was still pinned to Node 20), for `npm run build` at image build time
+# AND for Browsershot at request time (see comment above).
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
@@ -50,6 +52,15 @@ COPY . .
 # something resolved at container start.
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+# This container runs as root (no USER directive below), and Chromium
+# refuses to launch as root without --no-sandbox — confirmed by actually
+# running Puppeteer in this image, not assumed. Read by
+# PointTrackerController::exportPdf() to opt into Browsershot's
+# ->noSandbox(). Real sandboxing is preferable, but disabling it here is
+# no weaker than the container isolation already being root-owned by
+# default, and this app only ever renders HTML it generated itself.
+ENV BROWSERSHOT_NO_SANDBOX=true
 
 RUN composer install --no-dev --optimize-autoloader --no-interaction \
     && npm ci \

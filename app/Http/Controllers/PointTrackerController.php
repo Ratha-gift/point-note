@@ -110,10 +110,21 @@ class PointTrackerController extends Controller
             'monthPoint' => round($rows->sum('point'), 1),
         ])->render();
 
-        $pdf = Browsershot::html($html)
+        $browsershot = Browsershot::html($html)
             ->format('A4')
-            ->showBackground()
-            ->pdf();
+            ->showBackground();
+
+        // Chromium refuses to launch as root without --no-sandbox (verified
+        // locally in the actual Docker image: fails with "Running as root
+        // without --no-sandbox is not supported"). The Docker/Render
+        // container runs as root; local Windows dev doesn't need this and
+        // shouldn't silently disable sandboxing, so it's opt-in via env,
+        // not inferred — see BROWSERSHOT_NO_SANDBOX in Dockerfile.
+        if (env('BROWSERSHOT_NO_SANDBOX', false)) {
+            $browsershot->noSandbox();
+        }
+
+        $pdf = $browsershot->pdf();
 
         return response($pdf, 200, [
             'Content-Type' => 'application/pdf',
